@@ -18,29 +18,19 @@ def ImageRectification(image1, image2, K, d, pts1, pts2):
 	mapx1, mapy1 = cv2.initUndistortRectifyMap(K, d, R1, K, image_size, cv2.CV_16SC2)
 	mapx2, mapy2 = cv2.initUndistortRectifyMap(K, d, R2, K, image_size, cv2.CV_16SC2)
 	
-	palette1 = set(image1.flatten())
-	palette2 = set(image2.flatten())
+	#palette1 = set(image1.flatten())
+	#palette2 = set(image2.flatten())
 	
-	colors = set(range(256))
 	
-	key1 = colors.difference(palette1).pop()
-	key2 = colors.difference(palette2).pop()
+	rectified1 = cv2.remap(image1, mapx1, mapy1, interpolation = cv2.INTER_CUBIC, borderMode = cv2.BORDER_CONSTANT)
+	rectified2 = cv2.remap(image2, mapx2, mapy2, interpolation = cv2.INTER_CUBIC, borderMode = cv2.BORDER_CONSTANT)
+
 	
-	rectified1 = cv2.remap(image1, mapx1, mapy1, interpolation = cv2.INTER_CUBIC, borderMode = cv2.BORDER_CONSTANT, borderValue = key1)
-	rectified2 = cv2.remap(image2, mapx2, mapy2, interpolation = cv2.INTER_CUBIC, borderMode = cv2.BORDER_CONSTANT, borderValue = key2)
-	
-	rectified1_mask = np.ndarray(image1.shape, dtype = bool)
-	rectified2_mask = np.ndarray(image1.shape, dtype = bool)
-	rectified1_mask.fill(True)
-	rectified2_mask.fill(True)
-	
-	rectified1_mask[rectified1 == key1] = False
-	rectified2_mask[rectified2 == key2] = False
-	
-	return rectified1, rectified2, rectified1_mask, rectified2_mask
+	return rectified1, rectified2
 	
 
 # Intrinsic Camera Parameters
+cv2.namedWindow('Disparity', cv2.WINDOW_NORMAL)
 KL = np.array([[3979.911, 0, 1244.772], [0, 3979.911, 1019.507], [0, 0, 1]])
 KR = np.array([[3979.911, 0, 1369.115], [0, 3979.911, 1019.507], [0, 0, 1]])
 baseline = 193.001
@@ -73,10 +63,28 @@ pts1 = np.float32([kp1[m.queryIdx].pt for m in good]).reshape(-1,1,2)
 pts2 = np.float32([kp2[m.trainIdx].pt for m in good]).reshape(-1,1,2)
 
 # Image Rectification
-imgLrec, imgRrec, maskL, maskR = ImageRectification(imgLgray, imgRgray, KL, distortion, pts1, pts2)
+imgLrec, imgRrec = ImageRectification(imgLgray, imgRgray, KL, distortion, pts1, pts2)
 
-cv2.imshow('Left Rectified', imgLrec)
-cv2.imshow('Right Rectified', imgRrec)
+# Disparity
+
+max_disparity = 128
+min_disparity = 0
+num_disparities = max_disparity - min_disparity
+window_size = 3
+stereo = cv2.StereoSGBM_create(min_disparity, num_disparities, window_size)
+disparity = stereo.compute(imgLrec, imgRrec)
+cv2.filterSpeckles(disparity, 0, 400, max_disparity - 5)
+_, disparity = cv2.threshold(disparity, 0, max_disparity * 16, cv2.THRESH_TOZERO)
+disparity = (disparity / 16).astype(np.uint8)
+
+Q = np.array([[1, 0, 0, -2964/2], [0, 1, 0, -2000/2],[0, 0, 0, 3979.911],[0, 0, -1/193.001, 124.343/193.001]])
+print(Q)
+
+#points = cv2.reprojectImageto3D(disparity, Q)
+
+#cv2.imshow('Left Rectified', imgLrec)
+#cv2.imshow('Right Rectified', imgRrec)
+cv2.imshow('Disparity', disparity)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 
