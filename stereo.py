@@ -53,16 +53,16 @@ def ImageRectification(image1, image2, pts1, pts2, F, KL, KR, d):
 	
 def Reprojection3D(image, disparity, f, b):
 	#Q = np.array([[1, 0, 0, -2964/2], [0, 1, 0, -2000/2],[0, 0, 0, f],[0, 0, -1/b, 124.343/b]])
-	#Q = np.array([[1, 0, 0, -2964/2], [0, 1, 0, 2000/2],[0, 0, 0, f],[0, 0, 0, 1]])
+	Q = np.array([[1, 0, 0, -2964/2], [0, 1, 0, 2000/2],[0, 0, 0, f],[0, 0, 0, 1]])
 	#Q = np.array([[1, 0, 0, -1244.772], [0, 1, 0, -1019.507],[0, 0, 0, f],[0, 0, -1/b, 124.343/b]])
-	Q = np.array([[1, 0, 0, 0], [0, -1, 0, 0],[0, 0, f * 0.05, 0],[0, 0, 0, 1]])
+	#Q = np.array([[1, 0, 0, 0], [0, -1, 0, 0],[0, 0, f * 0.05, 0],[0, 0, 0, 1]])
 	points = cv2.reprojectImageTo3D(disparity, Q)
 	mask = disparity > disparity.min()
 	
 	colors = image
-	cv2.imshow('colors', colors)
-	cv2.waitKey(0)
-	cv2.destroyAllWindows()
+	#cv2.imshow('colors', colors)
+	#cv2.waitKey(0)
+	#cv2.destroyAllWindows()
 	
 	out_points = points[mask]
 	out_colors = image[mask]
