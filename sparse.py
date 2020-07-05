@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-def ImageRectification(image1, image2, K, d, pts1, pts2):
+def ImageRectification(image1, image2, KL, KR, d, pts1, pts2):
 	F, mask = cv2.findFundamentalMat(pts1, pts2)
 	pts1 = pts1[mask.ravel() == 1]
 	pts2 = pts2[mask.ravel() == 1]
@@ -11,12 +11,13 @@ def ImageRectification(image1, image2, K, d, pts1, pts2):
 	retval, H1, H2 = cv2.stereoRectifyUncalibrated(pts1, pts2, F, image_size)
 	# Perform rectify shearing, after the whole algorithm is done
 	
-	K_inv = np.linalg.inv(K)
-	R1 = np.matmul(np.matmul(K_inv,H1),K)
-	R2 = np.matmul(np.matmul(K_inv,H2),K)
+	K_invL = np.linalg.inv(KL)
+	K_invR = np.linalg.inv(KR)
+	R1 = np.matmul(np.matmul(K_invL,H1),KL)
+	R2 = np.matmul(np.matmul(K_invR,H2),KR)
 	
-	mapx1, mapy1 = cv2.initUndistortRectifyMap(K, d, R1, K, image_size, cv2.CV_16SC2)
-	mapx2, mapy2 = cv2.initUndistortRectifyMap(K, d, R2, K, image_size, cv2.CV_16SC2)
+	mapx1, mapy1 = cv2.initUndistortRectifyMap(KL, d, R1, KL, image_size, cv2.CV_16SC2)
+	mapx2, mapy2 = cv2.initUndistortRectifyMap(KR, d, R2, KR, image_size, cv2.CV_16SC2)
 	
 	#palette1 = set(image1.flatten())
 	#palette2 = set(image2.flatten())
@@ -31,6 +32,8 @@ def ImageRectification(image1, image2, K, d, pts1, pts2):
 
 # Intrinsic Camera Parameters
 cv2.namedWindow('Disparity', cv2.WINDOW_NORMAL)
+cv2.namedWindow('Left rectified', cv2.WINDOW_NORMAL)
+cv2.namedWindow('Right rectified', cv2.WINDOW_NORMAL)
 KL = np.array([[3979.911, 0, 1244.772], [0, 3979.911, 1019.507], [0, 0, 1]])
 KR = np.array([[3979.911, 0, 1369.115], [0, 3979.911, 1019.507], [0, 0, 1]])
 baseline = 193.001
@@ -63,7 +66,7 @@ pts1 = np.float32([kp1[m.queryIdx].pt for m in good]).reshape(-1,1,2)
 pts2 = np.float32([kp2[m.trainIdx].pt for m in good]).reshape(-1,1,2)
 
 # Image Rectification
-imgLrec, imgRrec = ImageRectification(imgLgray, imgRgray, KL, distortion, pts1, pts2)
+imgLrec, imgRrec = ImageRectification(imgLgray, imgRgray, KL, KR, distortion, pts1, pts2)
 
 # Disparity
 
@@ -80,11 +83,13 @@ disparity = (disparity / 16).astype(np.uint8)
 Q = np.array([[1, 0, 0, -2964/2], [0, 1, 0, -2000/2],[0, 0, 0, 3979.911],[0, 0, -1/193.001, 124.343/193.001]])
 print(Q)
 
-#points = cv2.reprojectImageto3D(disparity, Q)
+#points = cv2.reprojectImageTo3D(disparity, Q)
 
 #cv2.imshow('Left Rectified', imgLrec)
 #cv2.imshow('Right Rectified', imgRrec)
 cv2.imshow('Disparity', disparity)
+cv2.imshow('Left rectified',imgLrec)
+cv2.imshow('Right rectified', imgRrec)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 
