@@ -40,10 +40,10 @@ def ImageRectification(image1, image2, pts1, pts2, F, KL, KR, d):
 	K_invL = np.linalg.inv(KL)
 	K_invR = np.linalg.inv(KR)
 	R1 = np.matmul(np.matmul(K_invL,H1),KL)
-	R2 = np.matmul(np.matmul(K_invR,H2),KR)
+	R2 = np.matmul(np.matmul(K_invL,H2),KL)
 	
 	mapx1, mapy1 = cv2.initUndistortRectifyMap(KL, d, R1, KL, image_size, cv2.CV_16SC2)
-	mapx2, mapy2 = cv2.initUndistortRectifyMap(KR, d, R2, KR, image_size, cv2.CV_16SC2)
+	mapx2, mapy2 = cv2.initUndistortRectifyMap(KL, d, R2, KL, image_size, cv2.CV_16SC2)
 	
 	
 	rectified1 = cv2.remap(image1, mapx1, mapy1, interpolation = cv2.INTER_CUBIC, borderMode = cv2.BORDER_CONSTANT)
@@ -52,8 +52,8 @@ def ImageRectification(image1, image2, pts1, pts2, F, KL, KR, d):
 	return rectified1, rectified2
 	
 def Reprojection3D(image, disparity, f, b):
-	#Q = np.array([[1, 0, 0, -2964/2], [0, 1, 0, -2000/2],[0, 0, 0, f],[0, 0, -1/b, 124.343/b]])
-	Q = np.array([[1, 0, 0, -2964/2], [0, 1, 0, 2000/2],[0, 0, 0, f],[0, 0, 0, 1]])
+	Q = np.array([[1, 0, 0, -2964/2], [0, 1, 0, -2000/2],[0, 0, 0, f],[0, 0, -1/b, 124.343/b]])
+	#Q = np.array([[1, 0, 0, -2964/2], [0, 1, 0, 2000/2],[0, 0, 0, f],[0, 0, 0, 1]])
 	#Q = np.array([[1, 0, 0, -1244.772], [0, 1, 0, -1019.507],[0, 0, 0, f],[0, 0, -1/b, 124.343/b]])
 	#Q = np.array([[1, 0, 0, 0], [0, -1, 0, 0],[0, 0, f * 0.05, 0],[0, 0, 0, 1]])
 	points = cv2.reprojectImageTo3D(disparity, Q)
@@ -140,11 +140,11 @@ imgLrec, imgRrec = ImageRectification(imgL, imgR, pts1, pts2, F, KL, KR, D)
 #imgL, imgR = DisplayEpipolarLines(imgL, imgR, pts1, pts2)
 
 # Disparity Map
-max_disparity = 128
-min_disparity = 0
+max_disparity = 63
+min_disparity = -1
 num_disparities = max_disparity - min_disparity
-window_size = 3
-stereo = cv2.StereoSGBM_create(min_disparity, num_disparities, window_size)
+window_size = 5
+stereo = cv2.StereoSGBM_create(minDisparity = min_disparity, numDisparities = num_disparities, blockSize = 5, uniquenessRatio = 5, speckleWindowSize = 5, speckleRange = 5, disp12MaxDiff = 2, P1 = 8*3*window_size**2, P2 = 32*3*window_size**2)
 disparity = stereo.compute(imgLrec, imgRrec)
 #cv2.filterSpeckles(disparity, 0, 400, max_disparity - 5)
 _, disparity = cv2.threshold(disparity, 0, max_disparity * 16, cv2.THRESH_TOZERO)
