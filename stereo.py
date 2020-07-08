@@ -137,6 +137,8 @@ pts2 = pts2[mask.ravel() == 1]
 
 # Stereo Rectification
 imgLrec, imgRrec = ImageRectification(imgL, imgR, pts1, pts2, F, KL, KR, D)
+#imgLrec = imgL
+#imgRrec = imgR
 #imgL, imgR = DisplayEpipolarLines(imgL, imgR, pts1, pts2)
 
 # Disparity Map
@@ -146,7 +148,7 @@ num_disparities = max_disparity - min_disparity
 window_size = 5
 stereo = cv2.StereoSGBM_create(minDisparity = min_disparity, numDisparities = num_disparities, blockSize = 5, uniquenessRatio = 5, speckleWindowSize = 5, speckleRange = 5, disp12MaxDiff = 2, P1 = 8*3*window_size**2, P2 = 32*3*window_size**2)
 disparity = stereo.compute(imgLrec, imgRrec)
-#cv2.filterSpeckles(disparity, 0, 400, max_disparity - 5)
+cv2.filterSpeckles(disparity, 0, 400, max_disparity - 5)
 _, disparity = cv2.threshold(disparity, 0, max_disparity * 16, cv2.THRESH_TOZERO)
 disparity = (disparity / 16).astype(np.uint8)
 
