@@ -1,60 +1,20 @@
-# STEREO: RECONSTRUCTING A 3D SCENE FROM STEREO IMAGE PAIRS
+"""
+STEREO 3D RECONSTRUCTION
 
-# AUTHOR: ARIHANT GAUR
-# ORGANIZATION: IvLabs, VNIT
-
+AUTHOR: Arihant Gaur
+ORGANIZATION: IvLabs, VNIT
+"""
 
 import cv2
 import numpy as np
-import random
 
-def DrawEpipolarLines(img1, img2, lines, pts1, pts2):
-	r, c = img1.shape[0], img1.shape[1]
-	for r, pt1, pt2 in zip(lines, pts1, pts2):
-		color = tuple(np.random.randint(0, 255, 3).tolist())
-		x0, y0 = map(int, [0, -r[2] / r[1] ])
-		x1, y1 = map(int, [c, -(r[2] + r[0] * c) / r[1] ])
-		img1 = cv2.line(img1, (x0, y0), (x1, y1), color, 1)
-		img1 = cv2.circle(img1, tuple(pt1), 5, color, -1)
-		img2 = cv2.circle(img2, tuple(pt2), 5, color, -1)
 
-	return img1, img2
-	
-def DisplayEpipolarLines(img1, img2, pts1, pts2):
-	linesLeft = cv2.computeCorrespondEpilines(pts2.reshape(-1,1,2), 2, F)
-	linesLeft = linesLeft.reshape(-1,3)
-	img5, img6 = DrawEpipolarLines(img1, img2, linesLeft, pts1, pts2)
-
-	linesRight = cv2.computeCorrespondEpilines(pts1.reshape(-1,1,2), 1, F)
-	linesRight = linesLeft.reshape(-1,3)
-	img3, img4 = DrawEpipolarLines(img2, img1, linesRight, pts2, pts1)
-	
-	return img5, img3
-
-def ImageRectification(image1, image2, pts1, pts2, F, KL, KR, d):
-	height, width = image1.shape[0], image1.shape[1]
-	image_size = (width, height)
-	retval, H1, H2 = cv2.stereoRectifyUncalibrated(pts1, pts2, F, image_size)
-	# Perform rectify shearing, after the whole algorithm is done
-	
-	K_invL = np.linalg.inv(KL)
-	K_invR = np.linalg.inv(KR)
-	R1 = np.matmul(np.matmul(K_invL,H1),KL)
-	R2 = np.matmul(np.matmul(K_invL,H2),KL)
-	
-	mapx1, mapy1 = cv2.initUndistortRectifyMap(KL, d, R1, KL, image_size, cv2.CV_16SC2)
-	mapx2, mapy2 = cv2.initUndistortRectifyMap(KL, d, R2, KL, image_size, cv2.CV_16SC2)
-	
-	
-	rectified1 = cv2.remap(image1, mapx1, mapy1, interpolation = cv2.INTER_CUBIC, borderMode = cv2.BORDER_CONSTANT)
-	rectified2 = cv2.remap(image2, mapx2, mapy2, interpolation = cv2.INTER_CUBIC, borderMode = cv2.BORDER_CONSTANT)
-	
-	return rectified1, rectified2
-	
 def Reprojection3D(image, disparity, f, b):
-	Q = np.array([[1, 0, 0, -2964/2], [0, 1, 0, -2000/2],[0, 0, 0, f],[0, 0, -1/b, 124.343/b]])
+	Q = np.array([[1, 0, 0, -2964/2], [0, 1, 0, -2000/2],[0, 0, 0, f],[0, 0, -1/b, -124.343/b]])
 	#Q = np.array([[1, 0, 0, -2964/2], [0, 1, 0, 2000/2],[0, 0, 0, f],[0, 0, 0, 1]])
 	#Q = np.array([[1, 0, 0, -1244.772], [0, 1, 0, -1019.507],[0, 0, 0, f],[0, 0, -1/b, 124.343/b]])
+	#Q = np.array([[ 1.00000000e+00, 0.00000000e+00, 0.00000000e+00, -6.68420120e+02], [ 0.00000000e+00, 1.00000000e+00, 0.00000000e+00, -5.09922611e+02], [ 0.00000000e+00,  0.00000000e+00, 0.00000000e+00, 1.98995544e+03], [ 0.00000000e+00, 0.00000000e+00, 1.00000000e+00, -0.00000000e+00]])
+
 	#Q = np.array([[1, 0, 0, 0], [0, -1, 0, 0],[0, 0, f * 0.05, 0],[0, 0, 0, 1]])
 	points = cv2.reprojectImageTo3D(disparity, Q)
 	mask = disparity > disparity.min()
@@ -85,78 +45,100 @@ def Reprojection3D(image, disparity, f, b):
 	with open('stereo.ply', 'w') as f:
 		f.write(ply_header %dict(vert_num = len(verts)))
 		np.savetxt(f, verts, '%f %f %f %d %d %d')
-	
-# Naming Output Windows
+
 cv2.namedWindow('disparity', cv2.WINDOW_NORMAL)
 cv2.namedWindow('Left Image', cv2.WINDOW_NORMAL)
 cv2.namedWindow('Right Image', cv2.WINDOW_NORMAL)
 
-# Dataset parameters
-KL = np.array([[3979.911, 0, 1244.772], [0, 3979.911, 1019.507], [0, 0, 1]])
-KR = np.array([[3979.911, 0, 1369.115], [0, 3979.911, 1019.507], [0, 0, 1]])
+K = np.array([[3979.911, 0, 1369.115], [0, 3979.911, 1019.507], [0, 0, 1]], dtype = np.float32)
 D = np.zeros((5,1), dtype = np.float32)
-baseline = 193.001
-f = 3979.911
+downscale = 2
+K[0,0] = K[0,0] / float(downscale)
+K[1,1] = K[1,1] / float(downscale)
+K[0,2] = K[0,2] / float(downscale)
+K[1,2] = K[1,2] / float(downscale)
 
-# Image Acquisition
+#imgL = cv2.imread('/home/arihant/stereo/im0.png')
+#imgR = cv2.imread('/home/arihant/stereo/im1.png')
 imgL = cv2.pyrDown(cv2.imread('/home/arihant/stereo/im0.png'))
 imgR = cv2.pyrDown(cv2.imread('/home/arihant/stereo/im1.png'))
 
 imgLgray = cv2.cvtColor(imgL, cv2.COLOR_BGR2GRAY)
 imgRgray = cv2.cvtColor(imgR, cv2.COLOR_BGR2GRAY)
 
-# Feature Extraction using SIFT
+# Feature Extraction
 sift = cv2.xfeatures2d.SIFT_create()
 
 kp1, des1 = sift.detectAndCompute(imgLgray, None)
 kp2, des2 = sift.detectAndCompute(imgRgray, None)
 
-# Feature Matching using Brute Force KNN Matching and Outlier Rejection 
+# Feature Matching and Outlier Rejection
 bf = cv2.BFMatcher()
 matches = bf.knnMatch(des1, des2, k = 2)
 
 good = []
-pts1 = []
-pts2 = []
 for m,n in matches:
-	if m.distance < 0.80 * n.distance:
+	if m.distance < 0.70 * n.distance:
 		good.append(m)
-		pts2.append(kp2[m.trainIdx].pt)
-		pts1.append(kp1[m.queryIdx].pt)
 		
-pts1 = np.int32(pts1)
-pts2 = np.int32(pts2)
+pts1 = np.float32([kp1[m.queryIdx].pt for m in good]).reshape(-1,1,2)
+pts2 = np.float32([kp2[m.trainIdx].pt for m in good]).reshape(-1,1,2)
 
-# Fundamental Matrix Calculation
-F, mask = cv2.findFundamentalMat(pts1, pts2, cv2.FM_RANSAC)
-pts1 = pts1[mask.ravel() == 1]
-pts2 = pts2[mask.ravel() == 1]
+E, mask = cv2.findEssentialMat(pts1, pts2, K, method = cv2.RANSAC, prob = 0.999, threshold = 0.4, mask = None)
+pts1 = pts1[mask.ravel() ==1]
+pts2 = pts2[mask.ravel() ==1]
+_, R, t, mask = cv2.recoverPose(E, pts1, pts2, K)
 
-# Checking Epipolar Lines. Uncomment for verification
-#imgL, imgR = DisplayEpipolarLines(imgL, imgR, pts1, pts2)
+P1 = np.zeros((3,4))
+P1 = np.matmul(K, P1)
+P2 = np.hstack((R, t))
+P2 = np.matmul(K, P2)
+points1 = pts1.reshape(2, -1)
+points2 = pts2.reshape(2, -1)
+#cloud = cv2.triangulatePoints(P1, P2, pts1, pts2).reshape(-1, 4)[:, :3]
+#ret, R, t, inliers = cv2.solvePnPRansac(cloud, pts2, K, D, cv2.SOLVEPNP_ITERATIVE)
 
-# Stereo Rectification
-imgLrec, imgRrec = ImageRectification(imgL, imgR, pts1, pts2, F, KL, KR, D)
-#imgLrec = imgL
-#imgRrec = imgR
-#imgL, imgR = DisplayEpipolarLines(imgL, imgR, pts1, pts2)
+R1, R2, P1, P2, Q, a, b = cv2.stereoRectify(K, D, K, D, (1482, 1000), R, t)
+map1, map2 = cv2.initUndistortRectifyMap(K, D, R1, P1, (1482, 1000), cv2.CV_16SC2)
+imgLrec = cv2.remap(imgL, map1, map2, cv2.INTER_CUBIC)
 
-# Disparity Map
-max_disparity = 63
+map3, map4 = cv2.initUndistortRectifyMap(K, D, R2, P2, (1482, 1000), cv2.CV_16SC2)
+imgRrec = cv2.remap(imgR, map3, map4, cv2.INTER_CUBIC)
+
+max_disparity = 271
 min_disparity = -1
 num_disparities = max_disparity - min_disparity
 window_size = 5
 stereo = cv2.StereoSGBM_create(minDisparity = min_disparity, numDisparities = num_disparities, blockSize = 5, uniquenessRatio = 5, speckleWindowSize = 5, speckleRange = 5, disp12MaxDiff = 2, P1 = 8*3*window_size**2, P2 = 32*3*window_size**2)
+
+stereo2 = cv2.ximgproc.createRightMatcher(stereo)
+
+#lamb = 120000
+#sig = 1.2
+#visual_multiplier = 1.0
+#wls_filter = cv2.ximgproc.createDisparityWLSFilter(stereo)
+#wls_filter.setLambda(lamb)
+#wls_filter.setSigmaColor(sig)
+
 disparity = stereo.compute(imgLrec, imgRrec)
-cv2.filterSpeckles(disparity, 0, 400, max_disparity - 5)
+#cv2.filterSpeckles(disparity, 0, 400, max_disparity - 5)
 _, disparity = cv2.threshold(disparity, 0, max_disparity * 16, cv2.THRESH_TOZERO)
 disparity = (disparity / 16).astype(np.uint8)
 
-# 3D Reprojection
-img3D = Reprojection3D(imgL, disparity, f, baseline)
+#disparity2 = stereo2.compute(imgRrec, imgLrec)
+#cv2.filterSpeckles(disparity, 0, 400, max_disparity - 5)
+#_, disparity2 = cv2.threshold(disparity2, 0, max_disparity * 16, cv2.THRESH_TOZERO)
+#disparity2 = (disparity2 / 16).astype(np.uint8)
+#filteredImg = wls_filter.filter(disparity, imgL, None, disparity2)
 
-cv2.imshow('Left Image',imgL)
+baseline = 193.001
+f = 3979.911
+
+Reprojection3D(imgL, disparity, f, baseline)
+
+cv2.imshow('Left Image', imgL)
 cv2.imshow('Right Image', imgR)
 cv2.imshow('disparity', disparity)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
+
