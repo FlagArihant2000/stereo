@@ -111,7 +111,7 @@ num_disparities = max_disparity - min_disparity
 window_size = 5
 stereo = cv2.StereoSGBM_create(minDisparity = min_disparity, numDisparities = num_disparities, blockSize = 5, uniquenessRatio = 5, speckleWindowSize = 5, speckleRange = 5, disp12MaxDiff = 2, P1 = 8*3*window_size**2, P2 = 32*3*window_size**2)
 
-stereo2 = cv2.ximgproc.createRightMatcher(stereo)
+#stereo2 = cv2.ximgproc.createRightMatcher(stereo)
 
 #lamb = 120000
 #sig = 1.2
@@ -131,8 +131,8 @@ disparity = (disparity / 16).astype(np.uint8)
 #disparity2 = (disparity2 / 16).astype(np.uint8)
 #filteredImg = wls_filter.filter(disparity, imgL, None, disparity2)
 
-baseline = 193.001
-f = 3979.911
+baseline = 193.001/2
+f = 3979.911/2
 
 Reprojection3D(imgL, disparity, f, baseline)
 
