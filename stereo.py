@@ -46,7 +46,9 @@ def Reprojection3D(image, disparity, f, b):
 		f.write(ply_header %dict(vert_num = len(verts)))
 		np.savetxt(f, verts, '%f %f %f %d %d %d')
 
-cv2.namedWindow('disparity', cv2.WINDOW_NORMAL)
+cv2.namedWindow('disparity1', cv2.WINDOW_NORMAL)
+cv2.namedWindow('disparity2', cv2.WINDOW_NORMAL)
+cv2.namedWindow('WLS Filtered Disparity', cv2.WINDOW_NORMAL)
 cv2.namedWindow('Left Image', cv2.WINDOW_NORMAL)
 cv2.namedWindow('Right Image', cv2.WINDOW_NORMAL)
 
@@ -111,34 +113,42 @@ num_disparities = max_disparity - min_disparity
 window_size = 5
 stereo = cv2.StereoSGBM_create(minDisparity = min_disparity, numDisparities = num_disparities, blockSize = 5, uniquenessRatio = 5, speckleWindowSize = 5, speckleRange = 5, disp12MaxDiff = 2, P1 = 8*3*window_size**2, P2 = 32*3*window_size**2)
 
-#stereo2 = cv2.ximgproc.createRightMatcher(stereo)
+stereo2 = cv2.ximgproc.createRightMatcher(stereo)
 
-#lamb = 120000
-#sig = 1.2
-#visual_multiplier = 1.0
-#wls_filter = cv2.ximgproc.createDisparityWLSFilter(stereo)
-#wls_filter.setLambda(lamb)
-#wls_filter.setSigmaColor(sig)
+lamb = 80
+sig = 1.5
+visual_multiplier = 1.0
+wls_filter = cv2.ximgproc.createDisparityWLSFilter(stereo)
+wls_filter.setLambda(lamb)
+wls_filter.setSigmaColor(sig)
 
 disparity = stereo.compute(imgLrec, imgRrec)
-#cv2.filterSpeckles(disparity, 0, 400, max_disparity - 5)
-_, disparity = cv2.threshold(disparity, 0, max_disparity * 16, cv2.THRESH_TOZERO)
-disparity = (disparity / 16).astype(np.uint8)
 
-#disparity2 = stereo2.compute(imgRrec, imgLrec)
-#cv2.filterSpeckles(disparity, 0, 400, max_disparity - 5)
+#disparity = np.int16(disparity)
+#_, disparity = cv2.threshold(disparity, 0, max_disparity * 16, cv2.THRESH_TOZERO)
+#disparity = (disparity / 16).astype(np.uint8)
+
+disparity2 = stereo2.compute(imgRrec, imgLrec)
+disparity2 = np.int16(disparity2)
+
 #_, disparity2 = cv2.threshold(disparity2, 0, max_disparity * 16, cv2.THRESH_TOZERO)
 #disparity2 = (disparity2 / 16).astype(np.uint8)
-#filteredImg = wls_filter.filter(disparity, imgL, None, disparity2)
+
+filteredImg = wls_filter.filter(disparity, imgL, None, disparity2)
+_, filteredImg = cv2.threshold(filteredImg, 0, max_disparity * 16, cv2.THRESH_TOZERO)
+filteredImg = (filteredImg / 16).astype(np.uint8)
+
 
 baseline = 193.001/2
 f = 3979.911/2
 
-Reprojection3D(imgL, disparity, f, baseline)
+Reprojection3D(imgL, filteredImg, f, baseline)
 
-cv2.imshow('Left Image', imgL)
-cv2.imshow('Right Image', imgR)
-cv2.imshow('disparity', disparity)
+cv2.imshow('Left Image', imgLrec)
+cv2.imshow('Right Image', imgRrec)
+cv2.imshow('disparity1', disparity)
+cv2.imshow('disparity2', disparity2)
+cv2.imshow('WLS Filtered Disparity', filteredImg)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 
