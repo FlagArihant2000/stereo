@@ -65,6 +65,7 @@ K[1,2] = K[1,2] / float(downscale)
 imgL = cv2.pyrDown(cv2.imread('/home/arihant/stereo/im0.png'))
 imgR = cv2.pyrDown(cv2.imread('/home/arihant/stereo/im1.png'))
 
+
 imgLgray = cv2.cvtColor(imgL, cv2.COLOR_BGR2GRAY)
 imgRgray = cv2.cvtColor(imgR, cv2.COLOR_BGR2GRAY)
 
@@ -107,15 +108,15 @@ imgLrec = cv2.remap(imgL, map1, map2, cv2.INTER_CUBIC)
 map3, map4 = cv2.initUndistortRectifyMap(K, D, R2, P2, (1482, 1000), cv2.CV_16SC2)
 imgRrec = cv2.remap(imgR, map3, map4, cv2.INTER_CUBIC)
 
-max_disparity = 271
-min_disparity = -1
+max_disparity = 199
+min_disparity = 23
 num_disparities = max_disparity - min_disparity
 window_size = 5
 stereo = cv2.StereoSGBM_create(minDisparity = min_disparity, numDisparities = num_disparities, blockSize = 5, uniquenessRatio = 5, speckleWindowSize = 5, speckleRange = 5, disp12MaxDiff = 2, P1 = 8*3*window_size**2, P2 = 32*3*window_size**2)
 
 stereo2 = cv2.ximgproc.createRightMatcher(stereo)
 
-lamb = 80
+lamb = 8000
 sig = 1.5
 visual_multiplier = 1.0
 wls_filter = cv2.ximgproc.createDisparityWLSFilter(stereo)
