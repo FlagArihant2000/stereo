@@ -25,18 +25,22 @@ The objective is to reconstruct a 3D equivalent, given the pair of images.
 ## Code Parameters
 
 1. Disparity Map with SGBM
-```max_disparity = 199
+```
+max_disparity = 199
 min_disparity = 23
 num_disparities = max_disparity - min_disparity
 window_size = 5
-stereo = cv2.StereoSGBM_create(minDisparity = min_disparity, numDisparities = num_disparities, blockSize = 5, uniquenessRatio = 5, speckleWindowSize = 5, speckleRange = 5, disp12MaxDiff = 2, P1 = 8*3*window_size**2, P2 = 32*3*window_size**2)```
+stereo = cv2.StereoSGBM_create(minDisparity = min_disparity, numDisparities = num_disparities, blockSize = 5, uniquenessRatio = 5, speckleWindowSize = 5, speckleRange = 5, disp12MaxDiff = 2, P1 = 8*3*window_size**2, P2 = 32*3*window_size**2)
+```
 2. WLS Filter
-```lamb = 8000
+```
+lamb = 8000
 sig = 1.5
 visual_multiplier = 1.0
 wls_filter = cv2.ximgproc.createDisparityWLSFilter(stereo)
 wls_filter.setLambda(lamb)
-wls_filter.setSigmaColor(sig)```
+wls_filter.setSigmaColor(sig)
+```
 
 ## Result
 ![stereo](https://user-images.githubusercontent.com/45517467/87001892-2a982e80-c1d6-11ea-9f7d-9b4716ce4f38.png)
