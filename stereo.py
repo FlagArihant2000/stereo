@@ -11,18 +11,11 @@ import numpy as np
 
 def Reprojection3D(image, disparity, f, b):
 	Q = np.array([[1, 0, 0, -2964/2], [0, 1, 0, -2000/2],[0, 0, 0, f],[0, 0, -1/b, -124.343/b]])
-	#Q = np.array([[1, 0, 0, -2964/2], [0, 1, 0, 2000/2],[0, 0, 0, f],[0, 0, 0, 1]])
-	#Q = np.array([[1, 0, 0, -1244.772], [0, 1, 0, -1019.507],[0, 0, 0, f],[0, 0, -1/b, 124.343/b]])
-	#Q = np.array([[ 1.00000000e+00, 0.00000000e+00, 0.00000000e+00, -6.68420120e+02], [ 0.00000000e+00, 1.00000000e+00, 0.00000000e+00, -5.09922611e+02], [ 0.00000000e+00,  0.00000000e+00, 0.00000000e+00, 1.98995544e+03], [ 0.00000000e+00, 0.00000000e+00, 1.00000000e+00, -0.00000000e+00]])
 
-	#Q = np.array([[1, 0, 0, 0], [0, -1, 0, 0],[0, 0, f * 0.05, 0],[0, 0, 0, 1]])
 	points = cv2.reprojectImageTo3D(disparity, Q)
 	mask = disparity > disparity.min()
-	
 	colors = image
-	#cv2.imshow('colors', colors)
-	#cv2.waitKey(0)
-	#cv2.destroyAllWindows()
+
 	
 	out_points = points[mask]
 	out_colors = image[mask]
@@ -46,9 +39,8 @@ def Reprojection3D(image, disparity, f, b):
 		f.write(ply_header %dict(vert_num = len(verts)))
 		np.savetxt(f, verts, '%f %f %f %d %d %d')
 
-cv2.namedWindow('disparity1', cv2.WINDOW_NORMAL)
-cv2.namedWindow('disparity2', cv2.WINDOW_NORMAL)
-cv2.namedWindow('WLS Filtered Disparity', cv2.WINDOW_NORMAL)
+
+cv2.namedWindow('Disparity', cv2.WINDOW_NORMAL)
 cv2.namedWindow('Left Image', cv2.WINDOW_NORMAL)
 cv2.namedWindow('Right Image', cv2.WINDOW_NORMAL)
 
@@ -147,9 +139,7 @@ Reprojection3D(imgL, filteredImg, f, baseline)
 
 cv2.imshow('Left Image', imgLrec)
 cv2.imshow('Right Image', imgRrec)
-cv2.imshow('disparity1', disparity)
-cv2.imshow('disparity2', disparity2)
-cv2.imshow('WLS Filtered Disparity', filteredImg)
+cv2.imshow('Disparity', filteredImg)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 
