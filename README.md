@@ -50,6 +50,6 @@ Ground Truth Point Cloud: [Click](https://drive.google.com/file/d/1gB1SkUjDp1Rdh
 
 # Multiview Stereo
 
-The dataset taken into consideration is "Temple of the Dioskouroi" in Agrigento, Sicily, provided [here](https://vision.middlebury.edu/mview/data/). The samples on a ring around the object are considered initially. Intrinsic camera parameters are pose are found [here](templeR_par.txt).
+The dataset taken into consideration is "Temple of the Dioskouroi" in Agrigento, Sicily, provided [here](https://vision.middlebury.edu/mview/data/). The samples on a ring around the object are considered initially. Intrinsic camera parameters and pose are found [here](templeR_par.txt).
 
 Stereo reconstruction is currently under progress.
