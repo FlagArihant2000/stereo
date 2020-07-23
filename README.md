@@ -1,4 +1,4 @@
-# Stereo
+# Stereo for Image Pair
 
 The objective is to reconstruct a 3D equivalent, given the pair of images.
 
@@ -45,7 +45,11 @@ wls_filter.setSigmaColor(sig)
 ## Result
 ![stereo](https://user-images.githubusercontent.com/45517467/87001892-2a982e80-c1d6-11ea-9f7d-9b4716ce4f38.png)
 
-My Point Cloud: [Click](stereo.ply)
+My Point Cloud: [Click](stereo.ply) \\
 Ground Truth Point Cloud: [Click](https://drive.google.com/file/d/1gB1SkUjDp1Rdh9CE5o9vZe9EMabqKp5-/view?usp=sharing)
 
-Currently, this concept is being extended to Multiview stereo reconstruction.
+# Multiview Stereo
+
+The dataset taken into consideration is "Temple of the Dioskouroi" in Agrigento, Sicily, provided [here](https://vision.middlebury.edu/mview/data/). The samples on a ring around the object are considered initially. Intrinsic camera parameters are pose are found [here](templeR_par.txt).
+
+Stereo reconstruction is currently under progress.
