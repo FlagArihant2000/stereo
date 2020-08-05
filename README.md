@@ -52,4 +52,11 @@ Ground Truth Point Cloud: [Click](https://drive.google.com/file/d/1gB1SkUjDp1Rdh
 
 The dataset taken into consideration is "Temple of the Dioskouroi" in Agrigento, Sicily, provided [here](https://vision.middlebury.edu/mview/data/). The samples on a ring around the object are considered initially. Intrinsic camera parameters and pose are found [here](templeR_par.txt).
 
-Stereo reconstruction is currently under progress.
+There are four set of methods to solve this problem,
+1. Volumetric Method
+2. Surface Deformation
+3. Patch - Based Methods
+4. Depth Map Fusion (This method is used in this project)
+
+
+
