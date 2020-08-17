@@ -2,7 +2,8 @@ import cv2
 import numpy as np
 import os
 
-totlist = sorted(os.listdir('/home/arihant/stereo/MVS/'))
+img_directory = '/home/arihant/Downloads/templeRing/'
+totlist = sorted(os.listdir(img_directory))
 imglist = []
 for x in totlist:
 	if '.png' in x or '.jpg' in x or '.jpeg' in x:
@@ -25,8 +26,8 @@ stereo = cv2.StereoSGBM_create(minDisparity = min_disparity, numDisparities = nu
 
 
 while(imgenum < len(imglist) - 1):
-	img1 = cv2.imread(imglist[imgenum])
-	img2 = cv2.imread(imglist[imgenum + 1])
+	img1 = cv2.imread(img_directory + imglist[imgenum])
+	img2 = cv2.imread(img_directory + imglist[imgenum + 1])
 	img1gray = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
 	img2gray = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
 	
@@ -44,11 +45,12 @@ while(imgenum < len(imglist) - 1):
 	pts2 = np.float32([kp2[m.trainIdx].pt for m in good]).reshape(-1,1,2)
 	
 	E, mask = cv2.findEssentialMat(pts1, pts2, K, method = cv2.RANSAC, prob = 0.999, threshold = 0.4, mask = None)
-	#print(E)
-	if E is not None:
+	print(np.linalg.matrix_rank(E))
+	if E is not None and np.linalg.matrix_rank(E) == 2:
 		pts1 = pts1[mask.ravel() ==1]
 		pts2 = pts2[mask.ravel() ==1]
 		_, R, t, mask = cv2.recoverPose(E, pts1, pts2, K)
+		
 
 		P1 = np.hstack((R_ref, t_ref))
 		P1 = np.matmul(K, P1)
@@ -61,24 +63,24 @@ while(imgenum < len(imglist) - 1):
 		
 		points1 = pts1.reshape(2, -1)
 		points2 = pts2.reshape(2, -1)
-		R1, R2, P1, P2, Q, a, b = cv2.stereoRectify(K, D, K, D, (640, 480), R, t)
-		map1, map2 = cv2.initUndistortRectifyMap(K, D, R1, P1, (640, 480), cv2.CV_16SC2)
-		img1rec = cv2.remap(img1, map1, map2, cv2.INTER_CUBIC)
+		#R1, R2, P1, P2, Q, a, b = cv2.stereoRectify(K, D, K, D, (640, 480), R, t)
+		#map1, map2 = cv2.initUndistortRectifyMap(K, D, R1, P1, (640, 480), cv2.CV_16SC2)
+		#img1rec = cv2.remap(img1, map1, map2, cv2.INTER_CUBIC)
 
-		map3, map4 = cv2.initUndistortRectifyMap(K, D, R2, P2, (640, 480), cv2.CV_16SC2)
-		img2rec = cv2.remap(img2, map3, map4, cv2.INTER_CUBIC)
+		#map3, map4 = cv2.initUndistortRectifyMap(K, D, R2, P2, (640, 480), cv2.CV_16SC2)
+		#img2rec = cv2.remap(img2, map3, map4, cv2.INTER_CUBIC)
 		
-		if imgenum == 0:
-			disparity1 = stereo.compute(img1rec, img2rec)
-		else:
-			disparity2 = stereo.compute(img1rec, img2rec)
+		#if imgenum == 0:
+		#	disparity1 = stereo.compute(img1rec, img2rec)
+		#else:
+		#	disparity2 = stereo.compute(img1rec, img2rec)
 			
-	
+	cv2.imshow('image', img1)
 	#cv2.imshow('image1', img1rec)
 	#cv2.imshow('image2', img2rec)
-	cv2.imshow('disparity', disparity1)
-	if imgenum != 0:
-		cv2.imshow('disparity2', disparity2)
+	#cv2.imshow('disparity', disparity1)
+	#if imgenum != 0:
+	#	cv2.imshow('disparity2', disparity2)
 	imgenum = imgenum + 1
 	if cv2.waitKey(1) & 0xff == ord('q'):
 		break

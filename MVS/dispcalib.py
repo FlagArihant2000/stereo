@@ -2,10 +2,12 @@ import cv2
 import numpy as np
 import os
 
-totlist = sorted(os.listdir('/home/arihant/Downloads/temple'))
+img_directory = '/home/arihant/stereo/MVS/templeSparseRing/'
+
+totlist = sorted(os.listdir(img_directory))
 imglist = []
 for x in totlist:
-	if '.png' in x or '.jpg' in x or '.jpeg' in x:
+	if '.png' in x:
 		imglist = imglist + [x]
 #print(imglist)
 imgenum = 0
@@ -17,8 +19,8 @@ bf = cv2.BFMatcher()
 R_ref = np.eye(3)
 t_ref = np.array([[0],[0],[0]], dtype = np.float32)
 
-max_disparity = 128
-min_disparity = -128
+max_disparity = 199
+min_disparity = 23
 num_disparities = max_disparity - min_disparity
 window_size = 5
 stereo = cv2.StereoSGBM_create(minDisparity = min_disparity, numDisparities = num_disparities, blockSize = 5, uniquenessRatio = 5, speckleWindowSize = 5, speckleRange = 5, disp12MaxDiff = 2, P1 = 8*3*window_size**2, P2 = 32*3*window_size**2)
@@ -31,10 +33,10 @@ visual_multiplier = 1.0
 wls_filter = cv2.ximgproc.createDisparityWLSFilter(stereo)
 wls_filter.setLambda(lamb)
 wls_filter.setSigmaColor(sig)
+print(imglist)
 
-
-img1 = cv2.imread(imglist[imgenum])
-img2 = cv2.imread(imglist[imgenum + 1])
+img1 = cv2.imread(img_directory + imglist[imgenum + 15])
+img2 = cv2.imread(img_directory + imglist[imgenum + 16])
 img1gray = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
 img2gray = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
 print(img1.shape)
@@ -70,14 +72,19 @@ if E is not None:
 	
 	points1 = pts1.reshape(2, -1)
 	points2 = pts2.reshape(2, -1)
+	print(P1, P2)
 	R1, R2, P1, P2, Q, a, b = cv2.stereoRectify(K, D, K, D, (640, 480), R, t)
 	map1, map2 = cv2.initUndistortRectifyMap(K, D, R1, P1, (640, 480), cv2.CV_16SC2)
 	img1rec = cv2.remap(img1, map1, map2, cv2.INTER_CUBIC)
 
 	map3, map4 = cv2.initUndistortRectifyMap(K, D, R2, P2, (640, 480), cv2.CV_16SC2)
 	img2rec = cv2.remap(img2, map3, map4, cv2.INTER_CUBIC)
-
+	#img1rec, img2rec = img1, img2
 	disparity = stereo.compute(img1rec, img2rec)
+	disparity = np.int16(disparity)
+	#_, disparity = cv2.threshold(disparity, 0, max_disparity * 16, cv2.THRESH_TOZERO)
+	#disparity = (disparity / 16).astype(np.uint8)
+	
 	disparity2 = stereo2.compute(img2rec, img1rec)
 	disparity2 = np.int16(disparity2)
 	filteredImg = wls_filter.filter(disparity, img2, None, disparity2)
