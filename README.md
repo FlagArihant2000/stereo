@@ -48,18 +48,5 @@ wls_filter.setSigmaColor(sig)
 My Point Cloud: [Click](stereo.ply) \\
 Ground Truth Point Cloud: [Click](https://drive.google.com/file/d/1gB1SkUjDp1Rdh9CE5o9vZe9EMabqKp5-/view?usp=sharing)
 
-# Multiview Stereo
-
-The dataset taken into consideration is "Temple of the Dioskouroi" in Agrigento, Sicily, provided [here](https://vision.middlebury.edu/mview/data/). The samples on a ring around the object are considered initially. Intrinsic camera parameters and pose are found [here](templeR_par.txt).
-
-## Tentetive Pipeline
-
-1. Repeat steps 1 - 9 in the previous pipeline to get a point cloud for two views.
-2. Repeat step 1 for the next two views.
-3. Find orientation of the two point clouds using ICPR (Iterative Closest Point Registration)
-4. Perform zippening to merge the two point clouds.
-5. Repeat for each stereo pair.
-
-NOTE: The locations are initially taken from ground truth data. Later on, camera orientations will also be added with Structure from Motion (SfM).
 
 
